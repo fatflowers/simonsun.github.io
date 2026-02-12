@@ -4,15 +4,35 @@ enableEmoji = true
 defaultContentLanguage = "en"
 defaultContentLanguageInSubdir = false
 
+[markup.goldmark.renderer]
+  unsafe = true
+
+[markup.highlight]
+  noClasses = false
+  lineNos = true
+  lineNumbersInTable = true
+  tabWidth = 4
+
 [outputs]
   home = ["HTML", "RSS", "JSON"]
 
 [params]
   env = "production"
+  author = "Simon Sun"
   defaultTheme = "auto"
+  displayFullLangName = true
+
+  # Post display
   ShowReadingTime = true
   ShowShareButtons = true
-  displayFullLangName = true
+  ShowCodeCopyButtons = true
+  ShowBreadCrumbs = true
+  ShowPostNavLinks = true
+  ShowToc = true
+  TocOpen = false
+  ShowWordCount = true
+  ShowRssButtonInSectionTermList = true
+
 
 [languages.en]
   weight = 1
@@ -20,6 +40,14 @@ defaultContentLanguageInSubdir = false
   title = "Simon Sun"
 
   [languages.en.params]
+    [[languages.en.params.socialIcons]]
+      name = "github"
+      url = "https://github.com/fatflowers"
+
+    [[languages.en.params.socialIcons]]
+      name = "rss"
+      url = "/index.xml"
+
     [languages.en.params.homeInfoParams]
       Title = "Hi, I am Simon Sun"
       Content = "AI Engineering | Backend Developer | Open Source Enthusiast"
@@ -40,14 +68,19 @@ defaultContentLanguageInSubdir = false
     weight = 3
 
   [[languages.en.menus.main]]
+    name = "Archives"
+    url = "/archives"
+    weight = 4
+
+  [[languages.en.menus.main]]
     name = "Search"
     url = "/search"
-    weight = 4
+    weight = 5
 
   [[languages.en.menus.main]]
     name = "Tags"
     url = "/tags"
-    weight = 5
+    weight = 6
 
 [languages.zh]
   weight = 2
@@ -55,6 +88,14 @@ defaultContentLanguageInSubdir = false
   title = "Simon Sun"
 
   [languages.zh.params]
+    [[languages.zh.params.socialIcons]]
+      name = "github"
+      url = "https://github.com/fatflowers"
+
+    [[languages.zh.params.socialIcons]]
+      name = "rss"
+      url = "/zh/index.xml"
+
     [languages.zh.params.homeInfoParams]
       Title = "你好，我是Simon Sun"
       Content = "AI 工程师 | 后端开发者 | 开源爱好者"
@@ -75,11 +116,16 @@ defaultContentLanguageInSubdir = false
     weight = 3
 
   [[languages.zh.menus.main]]
+    name = "归档"
+    url = "/zh/archives"
+    weight = 4
+
+  [[languages.zh.menus.main]]
     name = "搜索"
     url = "/zh/search"
-    weight = 4
+    weight = 5
 
   [[languages.zh.menus.main]]
     name = "标签"
     url = "/zh/tags"
-    weight = 5
+    weight = 6
