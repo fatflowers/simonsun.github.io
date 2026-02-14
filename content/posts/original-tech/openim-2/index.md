@@ -16,13 +16,13 @@ From the monitoring metrics, we can see:
 - A large number of goroutines in `openimserver-openim-push` and `openimserver-openim-msggateway`.
 - A large number of socket connections in `openimserver-openim-push` and `openimserver-openim-msggateway` pods.
 
-![Excessive Socket Count](/posts/original-tech/openim-2/0401socketCount.png)
+![Excessive Socket Count](0401socketCount.png)
 
 ## Cause
 
 This looks like a socket leak: socket connections are opened but not actively closed, leading to a coroutine leak.
 
-![Message Downstream Data Link](/posts/original-tech/openim-2/msg_downstream.png)
+![Message Downstream Data Link](msg_downstream.png)
 
 
 ## Solution

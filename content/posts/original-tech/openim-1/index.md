@@ -9,7 +9,7 @@ draft: false
 > We deployed [OpenIM](https://github.com/openimsdk) version 3.5.1 in our Kubernetes environment for our company's IM scenarios. During development and operation, we encountered some issues. Here, I'll document the details of the problems and the resolution process.
 
 ## Problem Trigger Scenario
-![Test Program](/posts/original-tech/openim-1/testCode_en.jpeg)
+![Test Program](testCode_en.jpeg)
 We wrote a stress testing program to simulate typical user scenarios:
 1. Establish connection (Online)
 2. Send message
@@ -33,7 +33,7 @@ Below is the detailed explanation.
 To understand this problem, we need to first understand the OpenIM connection link.
 
 "Online" here refers to the OpenIM server accepting a long connection established by the client, which is implemented using WebSocket. Once the long connection is established, the client and server can send messages to each other.
-![Long Connection Link](/posts/original-tech/openim-1/websocket_en.jpeg)
+![Long Connection Link](websocket_en.jpeg)
 There are two servers on the same client long connection link: `openim-msggateway-proxy` and `openim-msggateway`.
 
 `openim-msggateway-proxy` itself has little business logic; it acts as a load balancer for long connections, facilitating the scaling of `openim-msggateway`.
@@ -87,7 +87,7 @@ func (ws *WsServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	go client.readMessage()
 }
 ```
-![ws.registerChan Data Write](/posts/original-tech/openim-1/registerChanInput_en.jpeg)
+![ws.registerChan Data Write](registerChanInput_en.jpeg)
 
 
 When the program starts, it starts a goroutine to consume `ws.registerChan` and `ws.unregisterChan`.
@@ -116,7 +116,7 @@ func (ws *WsServer) Run(done chan error) error {
     // ...
 }
 ```
-![Channel Data Processing](/posts/original-tech/openim-1/channelConsume_en.png)
+![Channel Data Processing](channelConsume_en.png)
 
 The `ws.registerClient` channel will trigger a series of execution chains. Finally, in `WsServer.UnRegister`, the client will be written to the `ws.unregisterClient` channel.
 ```go
@@ -185,7 +185,7 @@ The reason for the deadlock in this scenario is circular dependency, i.e.:
 - Consumption of `ws.registerChan` depends on `ws.unregisterChan` having write space.
 - Consumption of `ws.unregisterChan` depends on `ws.registerChan` being consumed.
 
-![Deadlock](/posts/original-tech/openim-1/lock_en.png)
+![Deadlock](lock_en.png)
 
 ### Core Idea
 Separate the processing logic of the two interdependent channels into independent goroutines to eliminate circular waiting.
@@ -199,7 +199,7 @@ After this improvement:
 - The circular dependency is eliminated, avoiding the root cause of the deadlock.
 - Concurrent processing capability is improved.
 
-![Unlock Deadlock](/posts/original-tech/openim-1/unlock_en.png)
+![Unlock Deadlock](unlock_en.png)
 
 ```go
 func (ws *WsServer) Run(done chan error) error {

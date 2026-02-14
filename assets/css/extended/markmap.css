@@ -1,0 +1,151 @@
+/* ── Markmap wrapper ── */
+.markmap-wrapper {
+  position: relative;
+  margin: 2rem 0;
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow: hidden;
+  resize: vertical;
+  height: 400px;
+  /* fallback, overridden by JS auto-fit */
+}
+
+.markmap-wrapper .markmap {
+  width: 100%;
+  height: 100%;
+}
+
+.markmap-wrapper .markmap>svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Zoom button ── */
+.markmap-zoom-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.25s ease, background 0.2s ease, transform 0.15s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.markmap-wrapper:hover .markmap-zoom-btn,
+.markmap-wrapper:focus-within .markmap-zoom-btn {
+  opacity: 1;
+}
+
+.markmap-zoom-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+.markmap-zoom-btn:active {
+  transform: scale(0.95);
+}
+
+.dark .markmap-zoom-btn {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark .markmap-zoom-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Lightbox overlay ── */
+.markmap-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0);
+  cursor: zoom-out;
+  transition: background 0.3s ease;
+}
+
+.markmap-lightbox.is-active {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.markmap-lightbox-content {
+  position: relative;
+  width: calc(100vw - 48px);
+  height: calc(100vh - 48px);
+  max-width: 1400px;
+  background: var(--code-bg, #f6f8fa);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+  transform: scale(0.9);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0.13, 1.5),
+    opacity 0.3s ease;
+}
+
+.markmap-lightbox.is-active .markmap-lightbox-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.markmap-lightbox-content svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Close button inside lightbox */
+.markmap-lightbox-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.markmap-lightbox-close:hover {
+  background: rgba(0, 0, 0, 0.75);
+  transform: scale(1.1);
+}
+
+.markmap-lightbox-close:active {
+  transform: scale(0.92);
+}
+
+.dark .markmap-lightbox-content {
+  background: var(--code-bg, #1e1e1e);
+}
+
+.dark .markmap-lightbox-close {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark .markmap-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.35);
+}

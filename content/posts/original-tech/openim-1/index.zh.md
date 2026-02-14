@@ -10,7 +10,7 @@ draft: false
 
 
 ## 问题触发场景
-![测试程序](/posts/original-tech/openim-1/testCode.png)
+![测试程序](testCode.png)
 我们编写了一个压力测试程序，模拟用户的典型使用场景：
 1. 建立连接（上线）
 2. 发送消息
@@ -34,7 +34,7 @@ draft: false
 为了理解这个问题，我们需要先了解OpenIM的连接链路。
 
 这里说的上线是指openim服务器接收客户端建立的长连接，长连接采用websocket实现。长连接建立好之后，客户端和服务器就可以向对方发送消息了。
-![长连接链路](/posts/original-tech/openim-1/websocket.png)
+![长连接链路](websocket.png)
 同一个客户端端长连接链路上有两个服务器：`openim-msggateway-proxy`和`openim-msggateway`
 
 `openim-msggateway-proxy`自身没有什么业务逻辑，它起到长连接负载均衡的作用，方便`openim-msggateway`的扩容。
@@ -88,7 +88,7 @@ func (ws *WsServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	go client.readMessage()
 }
 ```
-![ws.registerChan数据写入](/posts/original-tech/openim-1/registerChanInput.png)
+![ws.registerChan数据写入](registerChanInput.png)
 
 
 程序启动时，会启动一个协程去消费`ws.registerChan`和`ws.unregisterChan`
@@ -117,7 +117,7 @@ func (ws *WsServer) Run(done chan error) error {
     // ...
 }
 ```
-![channel数据处理](/posts/original-tech/openim-1/channelConsume.png)
+![channel数据处理](channelConsume.png)
 
 channel `ws.registerClient`会触发一系列的执行链路，最终在`WsServer.UnRegister`中，会将client写入channel `ws.unregisterClient`中
 ```go
@@ -186,7 +186,7 @@ func (ws *WsServer) UnRegister(c *Client) {
 - `ws.registerChan`的消费依赖于`ws.unregisterChan`有写入的空间
 - `ws.unregisterChan`的消费依赖于`ws.registerChan`被消费完
 
-![死锁](/posts/original-tech/openim-1/lock.png)
+![死锁](lock.png)
 
 ### 核心思路
 将相互依赖的两个channel的处理逻辑分离到独立的goroutine中，消除循环等待。
@@ -200,7 +200,7 @@ func (ws *WsServer) UnRegister(c *Client) {
 - 消除了循环依赖，避免了死锁的根本原因
 - 提高了并发处理能力
 
-![解除死锁](/posts/original-tech/openim-1/unlock.png)
+![解除死锁](unlock.png)
 
 ```go
 func (ws *WsServer) Run(done chan error) error {

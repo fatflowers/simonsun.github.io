@@ -42,14 +42,14 @@ draft: false
 2. 快递员的导航系统A：收件人 → 站点B
 3. 收件人在站点A等包裹，快递员却把包裹送到了站点B
 
-<img src="/posts/original-tech/openim-3/metaphor.svg" alt="比喻说明" width="600" style="max-width: 100%; height: auto;">
+<img src="metaphor.svg" alt="比喻说明" width="600" style="max-width: 100%; height: auto;">
 
 **两个独立的导航系统给出了不同的结果！**
 
 ## 技术原因分析
 
 ### OpenIM内部连接链路
-![openim内部的连接链路](/posts/original-tech/openim-3/full_path_link.png)
+![openim内部的连接链路](full_path_link.png)
 
 从图中可以看到，问题涉及两个独立的路由过程：
 - **消息发送路径**：`openim-push` 直接通过一致性hash找到用户连接的 `openim-msggateway` 节点
@@ -78,7 +78,7 @@ host := fmt.Sprintf("%s-openim-msggateway-%d.%s-openim-msggateway-headless.%s.sv
 ```
 
 ### 问题示例
-![输入侧与输出侧找到不同的openim-msggateway](/posts/original-tech/openim-3/expansion.png)
+![输入侧与输出侧找到不同的openim-msggateway](expansion.png)
 
 假设扩容到5个节点：
 1. **用户建立连接**：通过一致性hash算法，被分配到第4个节点
