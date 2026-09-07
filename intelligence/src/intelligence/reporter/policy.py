@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from difflib import SequenceMatcher
+import re
+from urllib.parse import urlsplit
 from typing import Union
 from intelligence.normalize.text import canonicalize_url
 
@@ -9,6 +12,38 @@ from intelligence.models.runs import RunStatus
 from .models import ReportEdition, ReportSignal
 
 MAX_REPORT_SIGNALS = 100
+
+
+def _editorial_text(signal: ReportSignal) -> str:
+    value = " ".join(filter(None, (
+        signal.analysis.headline or "", signal.analysis.summary, signal.analysis.key_change,
+    ))).casefold()
+    return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", value)
+
+
+def _semantic_duplicate(left: ReportSignal, right: ReportSignal) -> bool:
+    if left.target.casefold() != right.target.casefold():
+        return False
+    a, b = _editorial_text(left), _editorial_text(right)
+    if not a or not b:
+        return False
+    shorter, longer = sorted((a, b), key=len)
+    if len(shorter) >= 32 and shorter in longer:
+        return True
+    return SequenceMatcher(None, a, b, autojunk=False).ratio() >= 0.82
+
+
+def _same_social_thread(left: ReportSignal, right: ReportSignal) -> bool:
+    if left.target.casefold() != right.target.casefold():
+        return False
+    if abs((left.published_at - right.published_at).total_seconds()) > 30 * 60:
+        return False
+    identities = []
+    for signal in (left, right):
+        urls = [urlsplit(source.url) for source in signal.sources]
+        social = [url for url in urls if (url.hostname or "").lower() in {"x.com", "www.x.com", "twitter.com", "www.twitter.com"}]
+        identities.append(social[0].path.strip("/").split("/", 1)[0].casefold() if social else "")
+    return bool(identities[0] and identities[0] == identities[1])
 
 
 def reading_budget(signals):
@@ -64,7 +99,10 @@ class ReportPolicy:
         seen_ids = set()
         for signal in ordered:
             urls = {canonicalize_url(source.url) for source in signal.sources}
-            if signal.item_id in seen_ids or (urls and urls & seen_urls):
+            if signal.item_id in seen_ids or (urls and urls & seen_urls) or any(
+                _semantic_duplicate(signal, prior) or _same_social_thread(signal, prior)
+                for prior in unique
+            ):
                 continue
             unique.append(signal)
             seen_urls.update(urls)

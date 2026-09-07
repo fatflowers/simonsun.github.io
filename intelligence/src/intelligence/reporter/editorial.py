@@ -61,20 +61,38 @@ def exclusion_reason(row: Mapping[str, Any], start: datetime, end: datetime) -> 
             return "outside_report_window"
     except ValueError:
         return "invalid_publication_time"
+    if not observed_change:
+        source = str(metadata.get("publication_date_source", "")) if isinstance(metadata, Mapping) else ""
+        platform = str(metadata.get("platform", "")) if isinstance(metadata, Mapping) else ""
+        if source not in {"article_metadata", "article_text", "feed", "platform"} and platform not in {"twitter", "rss", "github", "mcp_registry"}:
+            return "unverified_publication_evidence"
     body = str(row.get("content_text") or "").strip()
     title = str(row.get("title") or "").strip()
     # Short social posts can be useful; title-only search results cannot.
     complete_social = isinstance(metadata, Mapping) and metadata.get("source_content_kind") == "complete_social_post"
     if len(body) < 40 or (body.casefold() == title.casefold() and not complete_social):
         return "insufficient_source_content"
+    if re.search(r"(?:…|\.\.\.)\s*(?:https?://\S+)?\s*$", body):
+        return "truncated_source_content"
     summary = str(row.get("summary") or "").strip()
     if not summary or summary.casefold().rstrip("。.") == title.casefold().rstrip("。."):
         return "title_only_summary"
+    if re.search(r"(?:…|\.\.\.)\s*$", summary):
+        return "truncated_summary"
     placeholders = ("公开来源显示", "反映相关产品与生态的演进", "结合自身路线评估影响",
                     "持续关注后续动态", "暂无具体信息", "待进一步分析")
     fields = (summary, str(row.get("key_change") or ""), str(row.get("why_it_matters") or ""))
     if any(phrase in field for phrase in placeholders for field in fields):
         return "placeholder_analysis"
+    self_disqualifying = (
+        "没有必要再次刊登", "没有新增事实", "重复已刊", "已刊旧事件", "旧口径",
+        "只有引言", "仅有引言", "没有应用名单", "没有统计口径", "正文未包含",
+        "未包含图片细节", "未给出分数", "没有分数", "未给出量化证据", "没有量化证据",
+        "没有给出量化证据", "未包含所链接原始发布全文", "未包含所链接调查正文",
+        "当前正文是linkblog评论", "当前材料是单条评论", "合并介绍",
+    )
+    if any(phrase in field for phrase in self_disqualifying for field in fields):
+        return "analysis_marks_item_incomplete_or_duplicate"
     return None
 
 

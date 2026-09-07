@@ -10,15 +10,19 @@ END = datetime(2026, 9, 6, tzinfo=timezone.utc)
 
 
 def event(**overrides):
-    return {
+    value = {
         "url": "https://example.com/news/new-api",
         "title": "New integration API",
         "published_at": "2026-09-05T05:00:00Z",
         "fetched_at": "2026-09-05T06:00:00Z",
+        "raw_metadata_json": '{"platform":"rss","content_complete":true}',
         "content_text": "Integrations now support scoped tokens and per-tool audit logs, available to existing accounts.",
         "summary": "集成 API 新增按工具限定权限的令牌和审计日志，现有账户可用。",
         **overrides,
     }
+    if "raw_metadata" in overrides and "raw_metadata_json" not in overrides:
+        value.pop("raw_metadata_json", None)
+    return value
 
 
 @pytest.mark.parametrize("overrides,reason", [
@@ -40,6 +44,21 @@ def test_excludes_unpublishable_events(overrides, reason):
 
 def test_accepts_dated_source_with_substantive_body():
     assert exclusion_reason(event(), START, END) is None
+
+
+@pytest.mark.parametrize("overrides,reason", [
+    ({"content_text": "This complete-looking post is actually cut off at the end…"}, "truncated_source_content"),
+    ({"summary": "这条摘要在关键事实前被截断…"}, "truncated_summary"),
+    ({"summary": "该帖只有引言，没有应用名单或统计口径。"}, "analysis_marks_item_incomplete_or_duplicate"),
+    ({"summary": "这是已刊旧事件，没有必要再次刊登旧口径。"}, "analysis_marks_item_incomplete_or_duplicate"),
+    ({"summary": "该帖没有给出量化证据。"}, "analysis_marks_item_incomplete_or_duplicate"),
+    ({"summary": "当前正文是linkblog评论，未包含所链接原始发布全文。"}, "analysis_marks_item_incomplete_or_duplicate"),
+    ({"summary": "当前材料是单条评论，未包含所链接调查正文。"}, "analysis_marks_item_incomplete_or_duplicate"),
+    ({"summary": "本条与已发布内容合并介绍。"}, "analysis_marks_item_incomplete_or_duplicate"),
+    ({"raw_metadata_json": "{}"}, "unverified_publication_evidence"),
+])
+def test_rejects_truncated_unverified_and_self_disqualified_analysis(overrides, reason):
+    assert exclusion_reason(event(**overrides), START, END) == reason
 
 
 def test_fetch_or_first_diff_flag_does_not_make_undated_page_news():

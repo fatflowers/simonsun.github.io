@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from dataclasses import replace
+from datetime import datetime, timedelta, timezone
 
 from intelligence.analyzer import validate_analysis
 from intelligence.reporter import ReportEdition, ReportPolicy, ReportSignal, ReportSource
@@ -67,8 +68,33 @@ def test_weekly_orders_signals_by_importance() -> None:
 def test_daily_caps_total_reading_budget_at_one_hundred() -> None:
     decision = ReportPolicy().decide(
         ReportEdition.MORNING,
-        [signal(str(i), 4) for i in range(1, 101)] + [signal("101", 2)],
+        [replace(signal(str(i), 4), target=f"Target {i}") for i in range(1, 101)]
+        + [replace(signal("101", 2), target="Target 101")],
     )
     assert len(decision.selected) == 100
     assert len(decision.deferred) == 1
     assert decision.deferred[0].analysis.importance == 2
+
+
+def test_semantic_duplicate_from_same_target_is_removed_across_different_urls() -> None:
+    first = signal("1", 4)
+    second = replace(
+        signal("2", 4),
+        analysis=replace(first.analysis, summary=first.analysis.summary + "。"),
+    )
+    decision = ReportPolicy().decide(ReportEdition.MORNING, [first, second])
+    assert len(decision.selected) == 1
+
+
+def test_consecutive_posts_from_same_x_account_are_one_event() -> None:
+    first = signal("1", 4)
+    first = replace(first, sources=(ReportSource("https://x.com/composio/status/100", "one"),))
+    second = signal("2", 4)
+    second = replace(
+        second,
+        published_at=first.published_at + timedelta(minutes=5),
+        sources=(ReportSource("https://x.com/composio/status/101", "two"),),
+        analysis=replace(second.analysis, summary="完全不同措辞描述同一线程中的另一项细节。"),
+    )
+    decision = ReportPolicy().decide(ReportEdition.MORNING, [first, second])
+    assert len(decision.selected) == 1

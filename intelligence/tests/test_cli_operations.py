@@ -307,6 +307,7 @@ def test_report_build_is_deterministic_for_generate_then_publish(tmp_path):
             "title": "New API",
             "url": "https://example.com/news/new-api",
             "content_text": "A new API adds scoped authentication and audit logs for individual integrations.",
+            "raw_metadata_json": '{"platform":"rss","content_complete":true}',
             "target_name": "Composio",
             "published_at": "2026-09-06T00:00:00Z",
             "summary": "Summary",
