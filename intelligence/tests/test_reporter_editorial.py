@@ -49,16 +49,22 @@ def test_accepts_dated_source_with_substantive_body():
 @pytest.mark.parametrize("overrides,reason", [
     ({"content_text": "This complete-looking post is actually cut off at the end…"}, "truncated_source_content"),
     ({"summary": "这条摘要在关键事实前被截断…"}, "truncated_summary"),
-    ({"summary": "该帖只有引言，没有应用名单或统计口径。"}, "analysis_marks_item_incomplete_or_duplicate"),
     ({"summary": "这是已刊旧事件，没有必要再次刊登旧口径。"}, "analysis_marks_item_incomplete_or_duplicate"),
-    ({"summary": "该帖没有给出量化证据。"}, "analysis_marks_item_incomplete_or_duplicate"),
-    ({"summary": "当前正文是linkblog评论，未包含所链接原始发布全文。"}, "analysis_marks_item_incomplete_or_duplicate"),
-    ({"summary": "当前材料是单条评论，未包含所链接调查正文。"}, "analysis_marks_item_incomplete_or_duplicate"),
     ({"summary": "本条与已发布内容合并介绍。"}, "analysis_marks_item_incomplete_or_duplicate"),
     ({"raw_metadata_json": "{}"}, "unverified_publication_evidence"),
 ])
 def test_rejects_truncated_unverified_and_self_disqualified_analysis(overrides, reason):
     assert exclusion_reason(event(**overrides), START, END) == reason
+
+
+@pytest.mark.parametrize("summary", [
+    "该帖只有引言，没有应用名单或统计口径。",
+    "该帖没有给出量化证据。",
+    "当前正文是linkblog评论，未包含所链接原始发布全文。",
+    "当前材料是单条评论，未包含所链接调查正文。",
+])
+def test_complete_dated_but_limited_material_can_be_a_caveated_brief(summary):
+    assert exclusion_reason(event(summary=summary), START, END) is None
 
 
 def test_fetch_or_first_diff_flag_does_not_make_undated_page_news():

@@ -1355,6 +1355,10 @@ def _report_signal(row: Mapping[str, Any]) -> ReportSignal:
         analysis=analysis,
         sources=sources,
         date_kind="observed_change" if verified_observed_change(_json_object(row.get("raw_metadata_json", row.get("raw_metadata")))) else "published",
+        source_label="%s / %s" % (
+            str(row.get("target_name") or row.get("target_slug") or "Unknown"),
+            str(row.get("channel_name") or row.get("channel_slug") or "Unknown"),
+        ),
     )
 
 

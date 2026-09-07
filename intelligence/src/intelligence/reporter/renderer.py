@@ -83,10 +83,15 @@ def _source_links(signal: ReportSignal, *, primary_only: bool = False) -> str:
     urls = tuple(sources)
     if primary_only:
         urls = urls[:1]
-    return " · ".join(
-        f"[{'原文' if index == 0 else f'补充来源 {index + 1}'}]({url})"
-        for index, url in enumerate(urls)
-    )
+    links = []
+    for index, url in enumerate(urls):
+        label = (
+            "数据源：" + _inline_markdown(signal.source_label, limit=80)
+            if index == 0 and signal.source_label
+            else ("原文" if index == 0 else f"补充来源 {index + 1}")
+        )
+        links.append(f"[{label}]({url})")
+    return " · ".join(links)
 
 
 def _signal_markdown(signal: ReportSignal, report: Report) -> list[str]:

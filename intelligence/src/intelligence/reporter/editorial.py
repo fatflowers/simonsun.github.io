@@ -86,10 +86,7 @@ def exclusion_reason(row: Mapping[str, Any], start: datetime, end: datetime) -> 
         return "placeholder_analysis"
     self_disqualifying = (
         "没有必要再次刊登", "没有新增事实", "重复已刊", "已刊旧事件", "旧口径",
-        "只有引言", "仅有引言", "没有应用名单", "没有统计口径", "正文未包含",
-        "未包含图片细节", "未给出分数", "没有分数", "未给出量化证据", "没有量化证据",
-        "没有给出量化证据", "未包含所链接原始发布全文", "未包含所链接调查正文",
-        "当前正文是linkblog评论", "当前材料是单条评论", "合并介绍",
+        "合并介绍",
     )
     if any(phrase in field for phrase in self_disqualifying for field in fields):
         return "analysis_marks_item_incomplete_or_duplicate"

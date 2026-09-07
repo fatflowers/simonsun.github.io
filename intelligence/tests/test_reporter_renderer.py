@@ -220,6 +220,13 @@ def test_additional_evidence_is_linked_with_its_event() -> None:
     assert "sourcesCount: 2" in markdown
 
 
+def test_report_displays_target_and_channel_as_data_source() -> None:
+    report = make_report()
+    signal = replace(report.signals[0], source_label="Composio / Official Blog")
+    markdown = render_hugo_report(replace(report, signals=(signal,))).markdown
+    assert "[数据源：Composio / Official Blog](https://example.com/news)" in markdown
+
+
 def test_importance_two_daily_signal_is_brief_not_lead() -> None:
     report = make_report()
     low = replace(
