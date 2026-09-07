@@ -232,3 +232,26 @@ def test_importance_two_daily_signal_is_brief_not_lead() -> None:
     assert "## 早报重点" not in markdown
     assert "## 一句话快讯" in markdown
     assert low.analysis.summary in markdown
+
+
+def test_daily_report_can_render_one_hundred_briefs_when_there_are_no_leads() -> None:
+    report = make_report()
+    original = report.signals[0]
+    signals = tuple(
+        replace(
+            original,
+            item_id=f"brief-{index}",
+            sources=(ReportSource(f"https://example.com/brief-{index}", f"来源 {index}"),),
+            analysis=replace(
+                original.analysis,
+                importance=2,
+                summary=f"第 {index} 条有效快讯。",
+                evidence=(replace(original.analysis.evidence[0], url=f"https://example.com/brief-{index}"),),
+            ),
+        )
+        for index in range(100)
+    )
+    markdown = render_hugo_report(replace(report, signals=signals)).markdown
+    assert "本期 0 条重点、100 条快讯" in markdown
+    assert "## 早报重点" not in markdown
+    assert len([line for line in markdown.split("## 一句话快讯", 1)[1].splitlines() if line.startswith("- ")]) == 100

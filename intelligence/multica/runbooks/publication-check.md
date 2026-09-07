@@ -7,3 +7,9 @@
 5. 部署成功后实际 GET 返回的公开 URL，要求 HTTP 200，并核对本次标题、每条信息及其就近原文链接。200 但内容仍旧也不算通过。普通 GET 用 curl 或浏览器即可，不需要额外凭据；禁止只做 HEAD 或只看首页。
 6. 重试前通过 `intelligence/scripts/intelctl-secure run list --limit 20`、`run show <run_id>`、对应 Git 提交和以上部署/正文检查确认前次结果。如果同版同日文章已上线且与原提交一致，记录已发布并结束，不重复 generate/publish、不创建第二篇、不把零新条目当事故。如果已 push 但仍部署中，只跟踪原 run；如果数据库与 Git/线上不一致，保留证据并更新故障 Issue，不能直接 SQL 改状态或自动覆盖已发布文章。
 7. 只有部署与线上正文均通过才向读者宣称“已发布”。若 push 成功而部署失败，明确报告这一区别，即使 D1 已为 published 也不能隐瞒。修订历史文章须走项目已实现的审计修订流程，定时任务不得自创 API、删记录或重置 Git。
+8. 线上正文核验成功后读取 `intelligence/config/notifications.yaml` 的 `report_lark`。morning、midday、evening、weekly、ad-hoc 所有报告都必须通知：
+   - 先运行 `intelctl audit list --entity-type report --entity-id <report_id>`；已存在 action=`lark.report_sent` 时跳过。
+   - 使用 bot 身份向唯一配置群发送 Markdown：`lark-cli im +messages-send --as bot --chat-id oc_6a65bd218e5dd85031c2d04814de54e1 --markdown <内容> --idempotency-key <稳定且不超过50字符的report键>`。
+   - 消息包含报告标题、版次、周期、简介、条目数量和完整 `published_url`。不得在公开 URL 尚未通过 GET 与 artifact 指纹核验前发送。
+   - 飞书返回 `ok=true` 后，用 `intelctl audit create --actor intelligence-operator --action lark.report_sent --entity-type report --entity-id <report_id> --after <任务目录内JSON>` 记录 chat_id、message_id、published_url、sent_at。
+   - 发送最多重试 2 次。通知失败不撤销已发布报告，但必须记录为发布后通知失败并保留下一轮补发；响应不确定且没有 message_id 时不得盲目重复。

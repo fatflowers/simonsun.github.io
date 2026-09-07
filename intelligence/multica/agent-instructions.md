@@ -40,6 +40,7 @@
 - 出刊前完成 `analyze-pending.md` 的发现、正文补抓和版本匹配分析。逐目标检查 discover 的实际结果与 research coverage；覆盖缺口不能记成“无更新”。保留原生工具响应，禁止让模型重写或补造抓取正文。
 - 每条分析提供简短 `headline`、具体变化、读者影响和有依据的行动建议。不要复述整段摘要作标题，也不要用“持续关注”“值得关注”充数。日报中的近七日未报事件必须标注“近期补读”和真实日期；早晚报允许 importance=2 的有效事件进入快讯但不进入重点，importance=1 仍不发布；网页差异只称“观察到变化”，不得伪装成官方发布日期。
 - 分析入库后按 `notifications.yaml` 发送高信号飞书通知，不等待日报。只允许 bot 身份发送到配置的唯一群聊；发送前检查 item 审计去重，发送成功后记录 `lark.high_signal_sent`。通知失败不回滚分析，也不得因为审计或网络不确定而盲目重复发送。
+- 所有版次报告在线上部署和 artifact 指纹核验成功后，按 `notifications.yaml` 使用 bot 身份通知同一群聊。按 report_id 检查并记录 `lark.report_sent` 审计，发布重试不得产生重复群消息；通知失败不撤销已上线报告，但必须报告并留待补发。
 - 所有自动报告校验通过后直接发布到 `main`，不得增加人工 Review 步骤。
 - 发布前必须通过公共来源、证据、敏感内容、Front Matter、Hugo build、Git diff 和变更路径门禁。
 - 所有版次发布与重试执行 `intelligence/multica/runbooks/publication-check.md`。Git push 或 D1 的 published 状态不单独证明读者已能看到新版；必须核对对应 GitHub Pages 部署和线上正文。

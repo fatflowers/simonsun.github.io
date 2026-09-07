@@ -20,3 +20,18 @@ high_signal_lark:
     - why_it_matters
     - primary_source_url
 
+report_lark:
+  enabled: true
+  delivery_stage: post_publication_verification
+  identity: bot
+  chat_id: oc_6a65bd218e5dd85031c2d04814de54e1
+  editions: [morning, midday, evening, weekly, ad-hoc]
+  audit_action: lark.report_sent
+  retry_limit: 2
+  message_fields:
+    - title
+    - edition
+    - period
+    - description
+    - item_count
+    - published_url

@@ -8,7 +8,7 @@ from intelligence.models.runs import RunStatus
 
 from .models import ReportEdition, ReportSignal
 
-MAX_REPORT_SIGNALS = 12
+MAX_REPORT_SIGNALS = 100
 
 
 def reading_budget(signals):

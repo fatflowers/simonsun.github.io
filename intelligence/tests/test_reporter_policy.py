@@ -24,7 +24,7 @@ def signal(item_id: str, importance: int) -> ReportSignal:
         item_id=item_id,
         target="Composio",
         title=f"事件 {item_id}",
-        published_at=datetime(2026, 9, 5, int(item_id), tzinfo=timezone.utc),
+        published_at=datetime(2026, 9, 5, int(item_id) % 24, tzinfo=timezone.utc),
         analysis=analysis,
         sources=(ReportSource(f"https://example.com/{item_id}", f"来源 {item_id}"),),
     )
@@ -64,12 +64,11 @@ def test_weekly_orders_signals_by_importance() -> None:
     assert [item.item_id for item in decision.selected] == ["2", "3", "1"]
 
 
-def test_daily_drops_low_value_and_caps_reading_budget() -> None:
+def test_daily_caps_total_reading_budget_at_one_hundred() -> None:
     decision = ReportPolicy().decide(
         ReportEdition.MORNING,
-        [signal(str(i), 4) for i in range(1, 16)] + [signal("16", 2)],
+        [signal(str(i), 4) for i in range(1, 101)] + [signal("101", 2)],
     )
-    assert len(decision.selected) == 12
-    assert len(decision.deferred) == 4
-    assert all(item.analysis.importance >= 3 for item in decision.selected)
-    assert decision.deferred[-1].analysis.importance == 2
+    assert len(decision.selected) == 100
+    assert len(decision.deferred) == 1
+    assert decision.deferred[0].analysis.importance == 2
