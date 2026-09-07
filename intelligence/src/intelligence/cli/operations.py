@@ -1034,6 +1034,16 @@ def generate_report(
             "report_id": report.report_id,
             "path": rendered.relative_path.as_posix(),
             "signals": len(report.signals),
+            "signal_details": [
+                {
+                    "item_id": signal.item_id,
+                    "source_label": signal.source_label,
+                    "url": signal.sources[0].url if signal.sources else "",
+                    "headline": signal.analysis.headline,
+                    "summary": signal.analysis.summary,
+                }
+                for signal in report.signals
+            ],
         }
 
     report_payload = _report_record(report, rendered.markdown)
