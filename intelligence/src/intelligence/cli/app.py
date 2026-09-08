@@ -192,6 +192,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     report = commands.add_parser("report")
     report_commands = report.add_subparsers(dest="report_command", required=True)
+    report_reconcile = report_commands.add_parser("reconcile")
+    report_reconcile.add_argument("--report-id", required=True)
+    report_reconcile.add_argument("--input", type=Path, required=True)
+    report_reconcile.add_argument("--git-commit", required=True)
     report_generate = report_commands.add_parser("generate")
     _add_report_arguments(report_generate)
     report_generate.add_argument("--dry-run", action="store_true")
@@ -497,6 +501,9 @@ def execute(args: argparse.Namespace) -> Any:
         )
 
     if args.command == "report":
+        if args.report_command == "reconcile":
+            from intelligence.cli.operations import reconcile_report
+            return reconcile_report(repository, client, args.report_id, args.input, args.git_commit, args.execution_run_id)
         if args.report_command == "revise":
             return client.revise_published_report(
                 args.report_id,

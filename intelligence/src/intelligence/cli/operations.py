@@ -1130,8 +1130,6 @@ def publish_report(
 ) -> Dict[str, Any]:
     if push and not execute:
         raise CatalogError("--push requires --execute")
-    if execute and push and not published_url:
-        raise CatalogError("--published-url is required for an executed push")
     if execute:
         now = utc_now()
         client.create_run(
@@ -1196,6 +1194,11 @@ def _publish_built_report(
     if not output.exists() or output.read_text(encoding="utf-8") != rendered.markdown:
         raise CatalogError("generated report artifact is missing or differs; run report generate first")
 
+    # The renderer emits Chinese single-file pages; their public URL includes /zh/.
+    expected_url = "https://fatflowers.github.io/zh/posts/intelligence/%s/" % rendered.relative_path.name.removesuffix(".zh.md")
+    if published_url and published_url.rstrip("/") not in {expected_url.rstrip("/"), expected_url.replace("/zh/", "/").rstrip("/")}:
+        raise CatalogError("incorrect report URL; expected %s" % expected_url)
+    published_url = expected_url
     publication_service = PublicationService(PublishValidator.default(), GitPublisher(root))
     validated = publication_service.validate(
         report, rendered, changed_paths=(rendered.relative_path,)
@@ -1244,6 +1247,29 @@ def _publish_built_report(
         "commit_sha": git.commit_sha if git else None,
         "commands": [list(command) for command in (git.commands if git else ())],
     }
+
+
+def reconcile_report(repository, client, report_id, path, commit, run_id):
+    """Recover only an exact committed and publicly verified ready artifact."""
+    from intelligence.publisher.verification import verify_publication
+    root = repository_root(repository)
+    relative = path.resolve().relative_to(root.resolve())
+    if relative.parent.as_posix() != "content/posts/intelligence" or not relative.name.endswith(".zh.md"):
+        raise CatalogError("invalid report path")
+    record = client.get_report(report_id).get("report") or {}
+    markdown = path.read_text(encoding="utf-8")
+    if record.get("content_markdown") != markdown or record.get("report_status") not in {"ready", "published"}:
+        raise CatalogError("stored report must match the ready artifact")
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise CatalogError("full commit hash required")
+    committed = subprocess.run(["git", "show", commit + ":" + relative.as_posix()], cwd=root, capture_output=True, text=True, check=True).stdout
+    if committed != markdown:
+        raise CatalogError("commit does not match report")
+    url = "https://fatflowers.github.io/zh/posts/intelligence/%s/" % relative.name.removesuffix(".zh.md")
+    verify_publication(url, markdown, timeout_seconds=20)
+    result = client.update_report_status(report_id, "published", published_url=url, git_commit=commit, idempotency_key="reconcile:" + report_id + ":" + commit)
+    client.create_audit_event({"id": run_id, "actor": "intelctl", "action": "report.reconcile", "entity_type": "report", "entity_id": report_id, "after": {"published_url": url, "git_commit": commit}, "created_at": utc_now()}, idempotency_key="audit:" + run_id)
+    return {"report_id": report_id, "published_url": url, "status": "published", "storage": result}
 
 
 def scheduler_plan(repository: CatalogRepository) -> Dict[str, Any]:
